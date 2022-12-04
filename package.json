@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node ./dist/index.js\"",
     "postinstall": "tsc",
+    "build": "npm install && npm run postinstall",
     "frontend": "cd ../frontend && npm run start",
     "developer": "concurrently \"npm run dev\" \"npm run frontend\"",
     "deploy": "git add . && git commit -m Heroku && git push heroku master"
