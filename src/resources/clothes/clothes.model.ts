@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import Clothes from '@/resources/clothes/clothes.interface';
-import ClothesCount from '@/utils/interfaces/clothesCount.interface';
+import {Clothes} from '@/resources/clothes/clothes.interface';
+import {ClothesCount} from '@/resources/clothes/clothes.interface';
 import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
 
 const ClothesSchema = new Schema(

@@ -1,9 +1,13 @@
 import { Document } from 'mongoose';
-import ClothesCount from '@/utils/interfaces/clothesCount.interface';
-import { Schema } from 'mongoose';
 import Collection from '@/resources/collection/collection.interface';
+import { Schema } from 'mongoose';
 
-export default interface Clothes extends Document {
+interface ClothesCount extends Object {
+    size: string;
+    count: number;
+}
+
+interface Clothes extends Document {
     name: string;
     imagesUrls: Array<string>;
     gifUrl: string;
@@ -18,3 +22,5 @@ export default interface Clothes extends Document {
     collection_id: Schema.Types.ObjectId | Collection;
     clothesCount: Array<ClothesCount>;
 }
+
+export {Clothes, ClothesCount};

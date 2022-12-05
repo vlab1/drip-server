@@ -15,9 +15,14 @@ function validationMiddleware(schema: Joi.Schema): RequestHandler {
 
         try {
             let data;
-            if (req.body.data) {
+            if (req.body.data) {             
                 data = JSON.parse(req.body.data);
-                data['images'] = req.files;
+                if (req.route.path.indexOf('modeling') >= 0 && req.files) {
+                    data['files'] = req.files;
+                }else if  (req.files) {
+                    data['images'] = req.files;
+                }
+
             } else {
                 data = req.body;
             }
@@ -34,7 +39,9 @@ function validationMiddleware(schema: Joi.Schema): RequestHandler {
             if (!(Object.keys(req.params).length === 0)) {
                 data = req.params;
             }     
+
             const value = await schema.validateAsync(data, validationOptions);
+
             req.body = value;
             next();
         } catch (e: any) {

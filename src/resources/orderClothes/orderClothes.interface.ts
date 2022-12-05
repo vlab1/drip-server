@@ -1,7 +1,7 @@
 import { Document } from 'mongoose';
 import { Schema } from 'mongoose';
 import Order from '@/resources/order/order.interface';
-import Clothes from '@/resources/clothes/clothes.interface';
+import {Clothes} from '@/resources/clothes/clothes.interface';
 
 export default interface OrderClothes extends Document {
     clothes_id: Schema.Types.ObjectId | Clothes;

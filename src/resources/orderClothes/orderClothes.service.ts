@@ -2,7 +2,7 @@ import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
 import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import { Schema } from 'mongoose';
 import ClothesService from '@/resources/clothes/clothes.service';
-import Clothes from '@/resources/clothes/clothes.interface';
+import {Clothes} from '@/resources/clothes/clothes.interface';
 import Order from '@/resources/order/order.interface';
 import OrderModel from '@/resources/order/order.model';
 import Props from '@/utils/types/props.type';

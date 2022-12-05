@@ -5,6 +5,9 @@ import validationMiddleware from '@/middleware/validation.middleware';
 import validate from '@/resources/modeling/modeling.validation';
 import ModelingService from '@/resources/modeling/modeling.service';
 import authenticated from '@/middleware/authenticated.middleware';
+const multer = require('multer');
+const memoStorage = multer.memoryStorage();
+const upload = multer({ memoStorage });
 
 class ModelingController implements Controller {
     public path = '/modeling';
@@ -24,10 +27,12 @@ class ModelingController implements Controller {
         );
         this.router.put(
             `${this.path}/update`,
+            upload.array('pic'),
             validationMiddleware(validate.update),
             authenticated,
             this.update
         );
+
         this.router.delete(
             `${this.path}/delete`,
             validationMiddleware(validate.delete0),
@@ -49,14 +54,21 @@ class ModelingController implements Controller {
         next: NextFunction
     ): Promise<Response | void> => {
         try {
-            const { name, size, color, user_id, images } = req.body;
+            const {
+                name,
+                size,
+                color,
+                type,
+            } = req.body;
+
+            const account_id = req.account._id;
 
             const modeling = await this.ModelingService.create(
                 name,
                 size,
                 color,
-                user_id,
-                images
+                type,
+                account_id
             );
 
             res.status(201).json({ modeling });
@@ -89,7 +101,18 @@ class ModelingController implements Controller {
         next: NextFunction
     ): Promise<Response | void> => {
         try {
-            const { _id, name, size, color, user_id, images } = req.body;
+            const {
+                _id,
+                name,
+                size,
+                color,
+                type,
+                images,
+                texts,
+                newTexts,
+                files,
+                filesDescription
+            } = req.body;
 
             const account_id = req.account._id;
 
@@ -98,8 +121,12 @@ class ModelingController implements Controller {
                 name,
                 size,
                 color,
-                user_id,
+                type,
                 images,
+                texts,
+                newTexts,
+                files,
+                filesDescription,
                 account_id
             );
 

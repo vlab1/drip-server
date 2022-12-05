@@ -3,7 +3,7 @@ import Order from '@/resources/order/order.interface';
 import { Schema } from 'mongoose';
 import ClothesService from '@/resources/clothes/clothes.service';
 import OrderClothesService from '@/resources/orderClothes/orderClothes.service';
-import Clothes from '@/resources/clothes/clothes.interface';
+import { Clothes } from '@/resources/clothes/clothes.interface';
 import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
 import Props from '@/utils/types/props.type';
@@ -129,7 +129,10 @@ class OrderService {
                 throw new Error('Order does not exist');
             }
 
-            if (account_id.toString() !== orderPerm.user_id.toString() && account.role !== 'Admin') {
+            if (
+                account_id.toString() !== orderPerm.user_id.toString() &&
+                account.role !== 'Admin'
+            ) {
                 throw new Error('You are not allowed to update this order');
             }
 
@@ -302,7 +305,6 @@ class OrderService {
         account_id: Schema.Types.ObjectId
     ): Promise<Order | Array<Order> | Error> {
         try {
-            
             props.user_id = account_id;
 
             const user_cart = await this.order.findOne({
@@ -313,11 +315,9 @@ class OrderService {
             if (!user_cart) {
                 await this.order.create({
                     user_id: props.user_id,
-                    status: 'cart'
-  
+                    status: 'cart',
                 });
             }
-
 
             const orders = await this.order
                 .find(props)
@@ -370,9 +370,7 @@ class OrderService {
     /**
      * Attempt to find order
      */
-    public async adminGet(
-        props: Props
-    ): Promise<Order | Array<Order> | Error> {
+    public async adminGet(props: Props): Promise<Order | Array<Order> | Error> {
         try {
             const orders = await this.order
                 .find({ status: { $ne: 'cart' } })
@@ -395,42 +393,40 @@ class OrderService {
         }
     }
 
-       /**
+    /**
      * Attempt to pay
      */
-        public async pay(
-            cartItem: any
-        ): Promise<any | Error> {
-            try {
-                const line_items = cartItem.map((item: any) => {
-                    return {
-                        price_data: {
-                            currency: "uah",
-                            product_data:{
-                                name: item.name,
-                                images: [item.image],
-                                metadata: {
-                                    id: item.clothes_id,
-                                }
+    public async pay(cartItem: any): Promise<any | Error> {
+        try {
+            const line_items = cartItem.map((item: any) => {
+                return {
+                    price_data: {
+                        currency: 'uah',
+                        product_data: {
+                            name: item.name,
+                            images: [item.image],
+                            metadata: {
+                                id: item.clothes_id,
                             },
-                            unit_amount: item.price * 100
                         },
-                        quantity: 1,
-                    };
-                });
-                const params = {
-                    line_items,
-                    mode: 'payment',
-                    success_url: `${process.env.CLIENT_URL}/orders`,
-                    cancel_url: `${process.env.CLIENT_URL}/cart`,
-                }
-                const session = await stripe.checkout.sessions.create(params);
-    
-                return ({url: session.url, check: true});
-            } catch (error: any) {
-                throw new Error(error.message);
-            }
+                        unit_amount: item.price * 100,
+                    },
+                    quantity: 1,
+                };
+            });
+            const params = {
+                line_items,
+                mode: 'payment',
+                success_url: `${process.env.CLIENT_URL}/orders`,
+                cancel_url: `${process.env.CLIENT_URL}/cart`,
+            };
+            const session = await stripe.checkout.sessions.create(params);
+
+            return { url: session.url, check: true };
+        } catch (error: any) {
+            throw new Error(error.message);
         }
+    }
 }
 
 export default OrderService;

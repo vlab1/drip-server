@@ -7,7 +7,7 @@ import {
     OrderItem,
     UserInfo,
 } from '@/resources/clothesToOrder/clothesToOrder.interface';
-import Clothes from '@/resources/clothes/clothes.interface';
+import {Clothes} from '@/resources/clothes/clothes.interface';
 import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import { ClothesImage } from '@/resources/clothesToOrder/clothesToOrder.interface';
 import ClothesService from '@/resources/clothes/clothes.service';

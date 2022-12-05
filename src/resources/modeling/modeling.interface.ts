@@ -1,12 +1,53 @@
 import { Document } from 'mongoose';
 import { Schema } from 'mongoose';
-import Image from '@/utils/interfaces/image.interface';
 import Account from '@/resources/account/account.interface';
 
-export default interface Modeling extends Document {
+interface FontStyle {
+    name: string;
+    value: string;
+}
+
+
+interface ImageModeling {
+    imageUrl: string;
+    image_height: number;
+    image_width: number;
+    rotate: number;
+    scale: number;
+    front_location: boolean;
+    x_coordinate: number;
+    y_coordinate: number;
+    z_coordinate: number;
+    originalname?: string;
+}
+
+interface TextModeling {
+    text_id: string;
+    text_size: number;
+    alignment: string;
+    text_color: string;
+    font: string;
+    font_style: Array<FontStyle>;
+    rotate: number;
+    scale: number;
+    front_location: boolean;
+    x_coordinate: number;
+    y_coordinate: number;
+    z_coordinate: number;
+}
+
+interface Modeling extends Document {
     name: string;
     size: string;
     color: string;
+    type: string;
     user_id: Schema.Types.ObjectId | Account;
-    images: Array<Image>;
+
+    canvas_width_web: number;
+    canvas_height_mobile: number;
+    canvas_width_mobile: number;
+    images: Array<ImageModeling>;
+    texts: Array<TextModeling>;
 }
+
+export { Modeling, TextModeling, ImageModeling, FontStyle };

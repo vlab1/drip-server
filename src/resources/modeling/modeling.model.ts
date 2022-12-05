@@ -1,6 +1,10 @@
 import { Schema, model } from 'mongoose';
-import Modeling from '@/resources/modeling/modeling.interface';
-import Image from '@/utils/interfaces/image.interface';
+import {
+    Modeling,
+    TextModeling,
+    ImageModeling,
+    FontStyle,
+} from '@/resources/modeling/modeling.interface';
 
 const ModelingSchema = new Schema(
     {
@@ -13,12 +17,18 @@ const ModelingSchema = new Schema(
         color: {
             type: String,
         },
+        type: {
+            type: String,
+        },
         user_id: {
             type: Schema.Types.ObjectId,
-            ref: 'Accounts',
+            ref: "Accounts",
         },
         images: {
-            type: Array<Image>,
+            type: Array<ImageModeling>,
+        },
+        texts: {
+            type: Array<TextModeling>,
         },
     },
     { timestamps: true }

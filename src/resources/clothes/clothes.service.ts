@@ -1,6 +1,6 @@
 import ClothesModel from '@/resources/clothes/clothes.model';
-import Clothes from '@/resources/clothes/clothes.interface';
-import ClothesCount from '@/utils/interfaces/clothesCount.interface';
+import {Clothes} from '@/resources/clothes/clothes.interface';
+import {ClothesCount} from '@/resources/clothes/clothes.interface';
 import { Schema } from 'mongoose';
 import Props from '@/utils/types/props.type';
 const {
