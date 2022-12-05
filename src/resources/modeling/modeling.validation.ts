@@ -22,6 +22,7 @@ const update = Joi.object({
         front_location: Joi.boolean(),
         x_coordinate: Joi.number(),
         y_coordinate: Joi.number(),
+        z_coordinate: Joi.number(),
     })),
     texts: Joi.array().items(Joi.object({
         _id: Joi.string(),
@@ -38,6 +39,7 @@ const update = Joi.object({
         front_location: Joi.boolean(),
         x_coordinate: Joi.number(),
         y_coordinate: Joi.number(),
+        z_coordinate: Joi.number(),
     })),
     newTexts: Joi.array().items(Joi.object({
         _id: Joi.string(),
@@ -54,6 +56,7 @@ const update = Joi.object({
         front_location: Joi.boolean(),
         x_coordinate: Joi.number(),
         y_coordinate: Joi.number(),
+        z_coordinate: Joi.number(),
     })),
     files: Joi.array(),
     filesDescription: Joi.array().items(Joi.object({
@@ -65,6 +68,7 @@ const update = Joi.object({
         front_location: Joi.boolean(),
         x_coordinate: Joi.number(),
         y_coordinate: Joi.number(),
+        z_coordinate: Joi.number(),
     })),
 });
 
