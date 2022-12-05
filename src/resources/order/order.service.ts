@@ -131,7 +131,7 @@ class OrderService {
 
             if (
                 account_id.toString() !== orderPerm.user_id.toString() &&
-                account.role !== 'Admin'
+                account.role !== 'Admin' && account.role !== 'Moderator'
             ) {
                 throw new Error('You are not allowed to update this order');
             }

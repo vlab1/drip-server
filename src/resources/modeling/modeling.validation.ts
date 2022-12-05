@@ -30,6 +30,7 @@ const update = Joi.object({
         alignment: Joi.string(),
         text_color: Joi.string(),
         font: Joi.string(),
+        text: Joi.string(),
         font_style: Joi.array().items({
             name: Joi.string(),
             value: Joi.string(),
@@ -47,6 +48,7 @@ const update = Joi.object({
         alignment: Joi.string(),
         text_color: Joi.string(),
         font: Joi.string(),
+        text: Joi.string(),
         font_style: Joi.array().items({
             name: Joi.string(),
             value: Joi.string(),

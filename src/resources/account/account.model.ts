@@ -28,7 +28,7 @@ const AccountSchema = new Schema(
         role: {
             type: String,
             default: 'User',
-            enum: ['User', 'Admin'],
+            enum: ['User', 'Admin', 'Moderator'],
         },
         surname: {
             type: String,

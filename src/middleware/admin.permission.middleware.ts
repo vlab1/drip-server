@@ -29,7 +29,7 @@ async function adminPermissionMiddleware(
 
         if (!account) {
             return next(new HttpException(401, 'Unauthorised'));
-        } else if (account.role !== 'Admin') {
+        } else if (account.role !== 'Admin' && account.role !== 'Moderator') {
             return next(new HttpException(401, 'Access is denied'));
         }
 

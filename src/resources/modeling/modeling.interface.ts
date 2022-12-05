@@ -25,6 +25,7 @@ interface TextModeling {
     text_id: string;
     text_size: number;
     alignment: string;
+    text: string;
     text_color: string;
     font: string;
     font_style: Array<FontStyle>;
