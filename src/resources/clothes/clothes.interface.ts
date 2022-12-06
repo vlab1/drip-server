@@ -21,6 +21,7 @@ interface Clothes extends Document {
     sex: string;
     collection_id: Schema.Types.ObjectId | Collection;
     clothesCount: Array<ClothesCount>;
+    isModeling: boolean;
 }
 
 export {Clothes, ClothesCount};

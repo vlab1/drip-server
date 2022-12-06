@@ -51,9 +51,18 @@ class ClothesService {
         care: string,
         clothesCount: Array<ClothesCount>,
         sex: string,
-        collection_id: Schema.Types.ObjectId
+        collection_id: Schema.Types.ObjectId,
+        isModeling: boolean
     ): Promise<Clothes | Error> {
         try {
+            if (isModeling && images && images.length > 1) {
+                throw new Error('Clothing layout can only contain one image');
+            }
+
+            if (isModeling && color && color.length > 1) {
+                throw new Error('Clothing layout can only contain one color');
+            }
+  
             const imagesUrls: Array<string> = [];
             let gifUrls: Array<string> = [];
 
@@ -100,6 +109,7 @@ class ClothesService {
                 clothesCount,
                 sex,
                 collection_id,
+                isModeling
             });
 
             return clothes;
@@ -127,7 +137,7 @@ class ClothesService {
         care: string,
         clothesCount: Array<ClothesCount>,
         sex: string,
-        collection_id: Schema.Types.ObjectId
+        collection_id: Schema.Types.ObjectId,
     ): Promise<Clothes | Error> {
         try {
             const clothesTemp = await this.clothes.findById(_id).populate({
@@ -478,7 +488,7 @@ class ClothesService {
             const clothes = await this.clothes.findOne({ _id: _id });
 
             if (!clothes) {
-                throw new Error('Unable to find clothes');
+                return false;
             }
 
             const total = clothes.clothesCount

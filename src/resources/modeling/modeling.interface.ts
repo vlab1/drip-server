@@ -1,12 +1,12 @@
 import { Document } from 'mongoose';
 import { Schema } from 'mongoose';
 import Account from '@/resources/account/account.interface';
+import { Clothes } from '@/resources/clothes/clothes.interface';
 
 interface FontStyle {
     name: string;
     value: string;
 }
-
 
 interface ImageModeling {
     imageUrl: string;
@@ -40,13 +40,8 @@ interface TextModeling {
 interface Modeling extends Document {
     name: string;
     size: string;
-    color: string;
-    type: string;
+    clothes_id: Schema.Types.ObjectId | Clothes;
     user_id: Schema.Types.ObjectId | Account;
-
-    canvas_width_web: number;
-    canvas_height_mobile: number;
-    canvas_width_mobile: number;
     images: Array<ImageModeling>;
     texts: Array<TextModeling>;
 }

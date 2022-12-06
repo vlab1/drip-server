@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import {Clothes} from '@/resources/clothes/clothes.interface';
 import {ClothesCount} from '@/resources/clothes/clothes.interface';
 import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
+import { boolean } from 'joi';
 
 const ClothesSchema = new Schema(
     {
@@ -46,6 +47,10 @@ const ClothesSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: 'Collections',
         },
+        isModeling: {
+            type: Boolean,
+            default: "false",
+        }
     },
     { timestamps: true }
 );

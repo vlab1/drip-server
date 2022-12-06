@@ -3,9 +3,14 @@ import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 
 const OrderClothesSchema = new Schema(
     {
+        productModel: {
+            type: String,
+            required: true,
+            enum: ['Clothes', 'Modeling'],
+        },
         clothes_id: {
             type: Schema.Types.ObjectId,
-            ref: 'Clothes',
+            refPath: 'productModel',
         },
         order_id: {
             type: Schema.Types.ObjectId,

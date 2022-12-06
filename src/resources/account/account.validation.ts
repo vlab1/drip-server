@@ -60,7 +60,7 @@ const adminFind = Joi.object({
 
 const adminUpdateRole = Joi.object({
     _id: Joi.string().hex().length(24).required(),
-    role: Joi.string().valid("User", "Admin").required()
+    role: Joi.string().valid("User", "Admin", "Moderator").required()
 });
 
 export default { register, login, googleLogin, update, updatePassword, adminDelete, adminFind, adminUpdateRole};

@@ -8,6 +8,8 @@ import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
 import Props from '@/utils/types/props.type';
 import AccountModel from '@/resources/account/account.model';
+import ModelingModel from '@/resources/modeling/modeling.model';
+import { Modeling } from '@/resources/modeling/modeling.interface';
 
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
@@ -17,6 +19,8 @@ class OrderService {
     private ClothesService = new ClothesService();
     private OrderClothesService = new OrderClothesService();
     private orderClothes = OrderClothesModel;
+    private modeling = ModelingModel;
+
     /**
      * Create a new order
      */
@@ -131,7 +135,8 @@ class OrderService {
 
             if (
                 account_id.toString() !== orderPerm.user_id.toString() &&
-                account.role !== 'Admin' && account.role !== 'Moderator'
+                account.role !== 'Admin' &&
+                account.role !== 'Moderator'
             ) {
                 throw new Error('You are not allowed to update this order');
             }
@@ -140,6 +145,186 @@ class OrderService {
                 moderator_id = account._id;
             }
 
+            if (status === 'processing') {
+                if (
+                    !region ||
+                    !city ||
+                    !novaposhta ||
+                    !phone ||
+                    !name ||
+                    !surname ||
+                    !patronymic ||
+                    !email
+                ) {
+                    throw new Error('Personal information must be filled');
+                }
+
+                const clothes = (await this.OrderClothesService.search({
+                    order_id: _id,
+                })) as Array<OrderClothes>;
+
+                if (!clothes || (clothes && clothes.length <= 0)) {
+                    throw new Error(
+                        'Unable to find order clothes with that order'
+                    );
+                }
+
+                await Promise.all(
+                    clothes.map(async (item, index) => {
+                        if (item.productModel === 'Modeling') {
+                            const modelingObj = item.clothes_id as Modeling;
+                            const modeling = await this.modeling
+                                .findById({ _id: modelingObj._id })
+                                .populate({
+                                    path: 'clothes_id',
+                                    populate: { path: '_id' },
+                                });
+                            if (!modeling) {
+                                throw new Error('Unable to find order clothes');
+                            }
+                            clothes[index].clothes_id = modeling.clothes_id;
+                            item.clothes_id = modeling.clothes_id;
+                        }
+                    })
+                );
+
+                const clothes_id = clothes.map((item) => [
+                    item.clothes_id as Schema.Types.ObjectId,
+                    item.size,
+                    item.count,
+                ]);
+                await Promise.all(
+                    clothes_id.map(async (item) => {
+                        const objectid = item[0] as Schema.Types.ObjectId;
+                        const size = item[1] as string;
+                        const number = item[2] as number;
+                        await this.ClothesService.incrementClothesCount(
+                            objectid,
+                            size,
+                            number * -1
+                        );
+                    })
+                );
+                const clothesInOrder = (await this.OrderClothesService.search({
+                    order_id: _id,
+                })) as Array<OrderClothes>;
+
+                await Promise.all(
+                    clothesInOrder.map(async (item, index) => {
+                        if (item.productModel === 'Modeling') {
+                            const modelingObj = item.clothes_id as Modeling;
+                            const modeling = await this.modeling
+                                .findById({ _id: modelingObj._id })
+                                .populate({
+                                    path: 'clothes_id',
+                                    populate: { path: '_id' },
+                                });
+                            if (!modeling) {
+                                throw new Error('Unable to find order clothes');
+                            }
+                            clothesInOrder[index].clothes_id = modeling;
+                            item.clothes_id = modeling;
+                        }
+                    })
+                );
+
+                if (!clothes) {
+                    throw new Error(
+                        'Unable to find order clothes with that order'
+                    );
+                }
+
+                await Promise.all(
+                    clothesInOrder.map(async (item) => {
+                        if (item.productModel === 'Clothes') {
+                            const clothesobject = item.clothes_id as Clothes;
+                            const objectid =
+                                clothesobject._id as Schema.Types.ObjectId;
+                            const clothesInOrderObject =
+                                (await this.ClothesService.find({
+                                    _id: objectid,
+                                })) as Array<Clothes>;
+                            await this.orderClothes.updateMany(
+                                { order_id: _id, clothes_id: objectid },
+                                {
+                                    clothesPrice: clothesInOrderObject[0].price,
+                                    clothesSale: clothesInOrderObject[0].sale,
+                                }
+                            );
+                        } else {
+                            const modelingobject = item.clothes_id as Modeling;
+                            const clothesobject =
+                                modelingobject.clothes_id as Clothes;
+                            const objectid =
+                                clothesobject._id as Schema.Types.ObjectId;
+                            const clothesInOrderObject =
+                                (await this.ClothesService.find({
+                                    _id: objectid,
+                                })) as Array<Clothes>;
+                            await this.orderClothes.updateMany(
+                                {
+                                    order_id: _id,
+                                    clothes_id: modelingobject._id,
+                                },
+                                {
+                                    clothesPrice: clothesInOrderObject[0].price,
+                                    clothesSale: clothesInOrderObject[0].sale,
+                                }
+                            );
+                        }
+                    })
+                );
+                await this.order.create({ user_id: account_id });
+            }
+
+            if (status === 'cancellation') {
+                const clothes = (await this.OrderClothesService.search({
+                    order_id: _id,
+                })) as Array<OrderClothes>;
+
+                if (!clothes || (clothes && clothes.length <= 0)) {
+                    throw new Error(
+                        'Unable to find order clothes with that order'
+                    );
+                }
+
+                await Promise.all(
+                    clothes.map(async (item, index) => {
+                        if (item.productModel === 'Modeling') {
+                            const modelingObj = item.clothes_id as Modeling;
+                            const modeling = await this.modeling
+                                .findById({ _id: modelingObj._id })
+                                .populate({
+                                    path: 'clothes_id',
+                                    populate: { path: '_id' },
+                                });
+                            if (!modeling) {
+                                throw new Error('Unable to find order clothes');
+                            }
+                            clothes[index].clothes_id = modeling.clothes_id;
+                            item.clothes_id = modeling.clothes_id;
+                        }
+                    })
+                );
+
+                const clothes_id = clothes.map((item) => [
+                    item.clothes_id as Schema.Types.ObjectId,
+                    item.size,
+                    item.count,
+                ]);
+                await Promise.all(
+                    clothes_id.map(async (item) => {
+                        const objectid = item[0] as Schema.Types.ObjectId;
+                        const size = item[1] as string;
+                        const number = item[2] as number;
+                        await this.ClothesService.incrementClothesCount(
+                            objectid,
+                            size,
+                            number
+                        );
+                    })
+                );
+            }
             const order = await this.order
                 .findOneAndUpdate(
                     { _id: _id },
@@ -173,97 +358,6 @@ class OrderService {
             if (!order) {
                 throw new Error('Unable to update order with that data');
             }
-
-            if (status === 'processing') {
-                const clothes = (await this.OrderClothesService.search({
-                    order_id: _id,
-                })) as Array<OrderClothes>;
-
-                if (!clothes) {
-                    throw new Error(
-                        'Unable to find order clothes with that order'
-                    );
-                }
-
-                const clothes_id = clothes.map((item) => [
-                    item.clothes_id as Schema.Types.ObjectId,
-                    item.size,
-                    item.count,
-                ]);
-                await Promise.all(
-                    clothes_id.map(async (item) => {
-                        const objectid = item[0] as Schema.Types.ObjectId;
-                        const size = item[1] as string;
-                        const number = item[2] as number;
-                        await this.ClothesService.incrementClothesCount(
-                            objectid,
-                            size,
-                            number * -1
-                        );
-                    })
-                );
-                const clothesInOrder = (await this.OrderClothesService.search({
-                    order_id: _id,
-                })) as Array<OrderClothes>;
-
-                if (!clothes) {
-                    throw new Error(
-                        'Unable to find order clothes with that order'
-                    );
-                }
-
-                const clothesInOrderId = clothesInOrder.map((item: any) => [
-                    item.clothes_id._id as Schema.Types.ObjectId,
-                ]);
-                await Promise.all(
-                    clothesInOrderId.map(async (item) => {
-                        const objectid = item[0] as Schema.Types.ObjectId;
-                        const clothesInOrderObject =
-                            (await this.ClothesService.find({
-                                _id: objectid,
-                            })) as Array<Clothes>;
-                        await this.orderClothes.updateMany(
-                            { order_id: _id, clothes_id: objectid },
-                            {
-                                clothesPrice: clothesInOrderObject[0].price,
-                                clothesSale: clothesInOrderObject[0].sale,
-                            }
-                        );
-                    })
-                );
-                await this.order.create({ user_id: account_id });
-            }
-
-            if (status === 'cancellation') {
-                const clothes = (await this.OrderClothesService.search({
-                    order_id: _id,
-                })) as Array<OrderClothes>;
-
-                if (!clothes) {
-                    throw new Error(
-                        'Unable to find order clothes with that order'
-                    );
-                }
-
-                const clothes_id = clothes.map((item) => [
-                    item.clothes_id as Schema.Types.ObjectId,
-                    item.size,
-                    item.count,
-                ]);
-                await Promise.all(
-                    clothes_id.map(async (item) => {
-                        const objectid = item[0] as Schema.Types.ObjectId;
-                        const size = item[1] as string;
-                        const number = item[2] as number;
-                        await this.ClothesService.incrementClothesCount(
-                            objectid,
-                            size,
-                            number
-                        );
-                    })
-                );
-            }
-
             return order;
         } catch (error: any) {
             throw new Error(error.message);
@@ -277,7 +371,7 @@ class OrderService {
         account_id: Schema.Types.ObjectId
     ): Promise<Order | Array<Order> | Error> {
         try {
-            const account = await this.account.findOne(account_id).exec();
+            //const account = await this.account.findOne(account_id).exec();
 
             const orders = await this.order.find(
                 { user_id: account_id },

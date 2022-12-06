@@ -14,11 +14,9 @@ const ModelingSchema = new Schema(
         size: {
             type: String,
         },
-        color: {
-            type: String,
-        },
-        type: {
-            type: String,
+        clothes_id: {
+            type: Schema.Types.ObjectId,
+            ref: "Clothes",
         },
         user_id: {
             type: Schema.Types.ObjectId,

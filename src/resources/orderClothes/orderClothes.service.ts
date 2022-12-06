@@ -2,15 +2,18 @@ import OrderClothesModel from '@/resources/orderClothes/orderClothes.model';
 import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import { Schema } from 'mongoose';
 import ClothesService from '@/resources/clothes/clothes.service';
-import {Clothes} from '@/resources/clothes/clothes.interface';
+import { Clothes } from '@/resources/clothes/clothes.interface';
 import Order from '@/resources/order/order.interface';
 import OrderModel from '@/resources/order/order.model';
 import Props from '@/utils/types/props.type';
+import ModelingModel from '@/resources/modeling/modeling.model';
+import { Modeling } from '@/resources/modeling/modeling.interface';
 
 class OrderClothesService {
     private orderClothes = OrderClothesModel;
     private ClothesService = new ClothesService();
     private order = OrderModel;
+    private modeling = ModelingModel;
 
     private async isUserOrder(
         _id: Schema.Types.ObjectId,
@@ -43,15 +46,30 @@ class OrderClothesService {
         order_id: Schema.Types.ObjectId,
         count: number,
         size: string,
-        color: string
+        color: string,
+        productModel: string
     ): Promise<OrderClothes | Error> {
         try {
-            const clothes = (await this.ClothesService.find({
+            let clothes = (await this.ClothesService.find({
                 _id: clothes_id,
             })) as Array<Clothes>;
 
-            if (!clothes) {
-                throw new Error('Unable to add clothes with that data');
+            if (!clothes || (clothes && clothes.length <= 0)) {
+                const modeling = await this.modeling
+                    .findById({
+                        _id: clothes_id,
+                    })
+                    .populate({
+                        path: 'clothes_id',
+                        populate: { path: '_id' },
+                    });
+
+                if (!modeling) {
+                    throw new Error('Unable to add item with that data');
+                }
+                const model = modeling.clothes_id as Clothes;
+                clothes = [] as Array<Clothes>;
+                clothes.push(model);
             }
 
             const clothesCount = clothes[0].clothesCount.find(
@@ -70,6 +88,7 @@ class OrderClothesService {
                 count,
                 size,
                 color,
+                productModel,
             });
 
             return orderClothes;
@@ -146,12 +165,26 @@ class OrderClothesService {
                 throw new Error('There are no clothes in the order');
             }
 
-            const clothes = (await this.ClothesService.find({
+            let clothes = (await this.ClothesService.find({
                 _id: currOrderClothes.clothes_id,
             })) as Array<Clothes>;
 
-            if (!clothes) {
-                throw new Error('Unable to find clothes with that data');
+            if (!clothes || (clothes && clothes.length <= 0)) {
+                const modeling = await this.modeling
+                    .findById({
+                        _id: clothes_id,
+                    })
+                    .populate({
+                        path: 'clothes_id',
+                        populate: { path: '_id' },
+                    });
+
+                if (!modeling) {
+                    throw new Error('Unable to add item with that data');
+                }
+                const model = modeling.clothes_id as Clothes;
+                clothes = [] as Array<Clothes>;
+                clothes.push(model);
             }
 
             const clothesCount = clothes[0].clothesCount.find(
@@ -287,7 +320,7 @@ class OrderClothesService {
                 query = {
                     _id: _id,
                     clothes_id: clothes_id,
-                    order_id: { "$in" : propertyValues},
+                    order_id: { $in: propertyValues },
                     count: count,
                     size: size,
                     color: color,
@@ -303,18 +336,21 @@ class OrderClothesService {
                 };
             }
 
-            Object.keys(query).forEach(key => query[key] === undefined ? delete query[key] : {});
+            Object.keys(query).forEach((key) =>
+                query[key] === undefined ? delete query[key] : {}
+            );
 
             const orderClothes = await this.orderClothes
-                .find(query).select(['order_id']);
-                // .populate({
-                //     path: 'clothes_id',
-                //     populate: { path: '_id' },
-                // })
-                // .populate({
-                //     path: 'order_id',
-                //     populate: { path: '_id' },
-                // });
+                .find(query)
+                .select(['order_id']);
+            // .populate({
+            //     path: 'clothes_id',
+            //     populate: { path: '_id' },
+            // })
+            // .populate({
+            //     path: 'order_id',
+            //     populate: { path: '_id' },
+            // });
 
             if (!orderClothes) {
                 throw new Error('Unable to find order clothes with that data');

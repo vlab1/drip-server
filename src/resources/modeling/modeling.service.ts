@@ -52,19 +52,15 @@ class ModelingService {
     public async create(
         name: string,
         size: string,
-        color: string,
-
-        type: string,
+        clothes_id: Schema.Types.ObjectId,
         account_id: Schema.Types.ObjectId
     ): Promise<Modeling> {
         try {
             const modeling = await this.modeling.create({
-                name,
-                size,
-                color,
-                user_id: account_id,
-
-                type,
+                name: name,
+                size: size,
+                clothes_id: clothes_id,
+                user_id: account_id
             });
 
             return modeling;
@@ -143,8 +139,6 @@ class ModelingService {
         _id: Schema.Types.ObjectId,
         name: string,
         size: string,
-        color: string,
-        type: string,
         images: Array<ImageModeling>,
         texts: Array<TextModeling>,
         newTexts: Array<TextModeling>,
@@ -270,8 +264,6 @@ class ModelingService {
                     {
                         name: name,
                         size: size,
-                        color: color,
-                        type: type,
                         images: images,
                         texts: texts,
                     },

@@ -18,6 +18,7 @@ const create = Joi.object({
         .required(),
     sex: Joi.string().required(),
     collection_id: Joi.string().hex().length(24),
+    isModeling: Joi.boolean().required()
 });
 
 const update = Joi.object({

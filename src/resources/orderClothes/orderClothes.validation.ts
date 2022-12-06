@@ -6,6 +6,7 @@ const create = Joi.object({
     count: Joi.number().required(),
     size: Joi.string().required(),
     color: Joi.string().required(),
+    productModel: Joi.string().valid('Clothes', 'Modeling')
 });
 
 const update = Joi.object({
@@ -28,6 +29,7 @@ const find = Joi.object({
     count: Joi.number(),
     size: Joi.string(),
     color: Joi.string(),
+    productModel: Joi.string()
 });
 
 export default { create, update, delete0, find };

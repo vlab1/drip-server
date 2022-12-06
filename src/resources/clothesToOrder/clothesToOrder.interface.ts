@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { Schema } from 'mongoose';
+import { Modeling } from '@/resources/modeling/modeling.interface';
 
 interface ClothesItem extends Document {
     clothes_id: Schema.Types.ObjectId;
@@ -17,6 +18,9 @@ interface ClothesItem extends Document {
     clothes_type: string;
     clothes_count: number;
     clothes_size: string;
+    productModel: string;
+    modeling: Modeling;
+    isModeling: boolean;
 }
 
 interface OrderInfo extends Document {
@@ -33,6 +37,8 @@ interface ClothesImage extends Document {
     clothes_type: string;
     clothes_count: number;
     clothes_size: string;
+    modeling: Modeling;
+    isModeling: boolean;
 }
 
 interface UserInfo extends Document {

@@ -7,7 +7,7 @@ import {
     OrderItem,
     UserInfo,
 } from '@/resources/clothesToOrder/clothesToOrder.interface';
-import {Clothes} from '@/resources/clothes/clothes.interface';
+import { Clothes } from '@/resources/clothes/clothes.interface';
 import OrderClothes from '@/resources/orderClothes/orderClothes.interface';
 import { ClothesImage } from '@/resources/clothesToOrder/clothesToOrder.interface';
 import ClothesService from '@/resources/clothes/clothes.service';
@@ -15,9 +15,12 @@ import OrderClothesService from '@/resources/orderClothes/orderClothes.service';
 import OrderService from '@/resources/order/order.service';
 import Order from '@/resources/order/order.interface';
 import Account from '@/resources/account/account.interface';
+import ModelingModel from '@/resources/modeling/modeling.model';
+import { Modeling } from '@/resources/modeling/modeling.interface';
 
 class ClothesToOrderService {
     private order = OrderModel;
+    private modeling = ModelingModel;
     private orderClothes = OrderClothesModel;
     private ClothesService = new ClothesService();
     private OrderClothesService = new OrderClothesService();
@@ -72,35 +75,15 @@ class ClothesToOrderService {
 
             this.orderClear(order_id);
 
-            const order = await this.order
-                .findOne({ _id: order_id })
-                .select(['_id', 'status'])
-                .exec();
+            const order = await this.order.findOne({ _id: order_id }).exec();
 
             const orderClothes = await this.orderClothes
                 .find({ order_id: order_id })
                 .populate({
                     path: 'clothes_id',
                     populate: { path: '_id' },
-                    select: {
-                        _id: 1,
-                        name: 1,
-                        imagesUrls: 1,
-                        price: 1,
-                        sale: 1,
-                    },
                 })
-                .select([
-                    '_id',
-                    'clothes_id',
-                    'count',
-                    'size',
-                    'color',
-                    'clothesPrice',
-                    'clothesSale',
-                ])
                 .exec();
-
             if (!order) {
                 throw new Error('Unable to find  order');
             }
@@ -108,7 +91,32 @@ class ClothesToOrderService {
             if (!orderClothes) {
                 throw new Error('Unable to find order clothes');
             }
-
+            if (orderClothes.length > 0) {
+                await Promise.all(
+                    orderClothes.map(
+                        async (item: OrderClothes, index: number) => {
+                            if (item.productModel === 'Modeling') {
+                                const modelingObj = item.clothes_id as Modeling;
+                                const modeling = await this.modeling
+                                    .findById({ _id: modelingObj._id })
+                                    .populate({
+                                        path: 'clothes_id',
+                                        populate: { path: '_id' },
+                                    });
+                                  
+                                if (!modeling) {
+                                    throw new Error(
+                                        'Unable to find order clothes'
+                                    );
+                                }            
+                                orderClothes[index].clothes_id = modeling;
+                                item.clothes_id = modeling;
+                 
+                            }
+                        }
+                    )
+                );
+            }
             const orderInfo = {} as OrderInfo;
             if (orderClothes.length === 0) {
                 return orderInfo;
@@ -117,8 +125,25 @@ class ClothesToOrderService {
 
             orderClothes.map((item) => {
                 const clothesItem = {} as ClothesItem;
-                const clothes = item.clothes_id as Clothes;
+                if (item.productModel === 'Modeling') {
+                    const modeling = item.clothes_id as Modeling;
+                    clothesItem.modeling = modeling;
+                }
 
+                let clothes = {} as Clothes | Modeling;
+
+                if (item.productModel === 'Clothes') {
+                    clothes = item.clothes_id as Clothes;
+                }
+                if (item.productModel === 'Modeling') {
+                    clothes = item.clothes_id as Modeling;
+                    if (clothes) {
+                        clothes = clothes.clothes_id as Clothes;
+                    }
+                }        
+                clothes = clothes as Clothes;
+                clothesItem.isModeling = clothes.isModeling;
+                clothesItem.productModel = item.productModel;
                 clothesItem.clothes_id = clothes._id;
                 clothesItem.orderClothes_id = item._id;
                 if (
@@ -172,7 +197,6 @@ class ClothesToOrderService {
         try {
             let orders = await this.order
                 .find({ user_id: account_id, status: { $ne: 'cart' } })
-                .select(['_id', 'status', 'status_update'])
                 .exec();
 
             if (!orders) {
@@ -189,26 +213,33 @@ class ClothesToOrderService {
                         .populate({
                             path: 'clothes_id',
                             populate: { path: '_id' },
-                            select: {
-                                _id: 1,
-                                name: 1,
-                                imagesUrls: 1,
-                                price: 1,
-                                sale: 1,
-                                type: 1,
-                            },
                         })
-                        .select([
-                            '_id',
-                            'clothes_id',
-                            'order_id',
-                            'count',
-                            'size',
-                            'color',
-                            'clothesPrice',
-                            'clothesSale',
-                        ])
                         .exec()) as Array<OrderClothes>;
+                    if (orderClothesItem.length > 0) {
+                        await Promise.all(
+                            orderClothesItem.map(
+                                async (item: OrderClothes, index: number) => {
+                                    if (item.productModel === 'Modeling') {
+                                        const modelingObj = item.clothes_id as Modeling;
+                                        const modeling = await this.modeling
+                                            .findById({ _id: modelingObj._id })
+                                            .populate({
+                                                path: 'clothes_id',
+                                                populate: { path: '_id' },
+                                            });
+                                        if (!modeling) {
+                                            throw new Error(
+                                                'Unable to find order clothes'
+                                            );
+                                        }
+                                        orderClothesItem[index].clothes_id =
+                                            modeling;
+                                        item.clothes_id = modeling;
+                                    }
+                                }
+                            )
+                        );
+                    }
                     orderClothes.push(orderClothesItem);
                 })
             );
@@ -244,10 +275,35 @@ class ClothesToOrderService {
                 orderItem.status_update = orders[i].status_update;
 
                 for (let j = 0; j < orderClothes[i].length; j++) {
-                    const clothes = orderClothes[i][j].clothes_id as Clothes;
-                    const clothesItem = {} as ClothesItem;
-                    clothesItem.clothes_id = clothes._id;
+                    let clothes = orderClothes[i][j].clothes_id as
+                        | Clothes
+                        | Modeling;
 
+                    if (orderClothes[i][j].productModel === 'Clothes') {
+                        clothes = orderClothes[i][j].clothes_id as Clothes;
+                    }
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        clothes = orderClothes[i][j].clothes_id as Modeling;
+                        if (clothes) {
+                            clothes = clothes.clothes_id as Clothes;
+                        }
+                    }
+                    clothes = clothes as Clothes;
+                    if (!clothes) {
+                        continue;
+                    }
+                    clothesImage.isModeling = clothes.isModeling;
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        const modeling = orderClothes[i][j].clothes_id as Modeling;
+                        clothesImage.modeling = modeling;
+                    }
+                    const clothesItem = {} as ClothesItem;
+                    clothesItem.isModeling = clothes.isModeling;
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        const modeling = orderClothes[i][j].clothes_id as Modeling;
+                        clothesItem.modeling = modeling;
+                    }
+                    clothesItem.clothes_id = clothes._id;
                     if (
                         clothes &&
                         clothes.imagesUrls &&
@@ -304,33 +360,14 @@ class ClothesToOrderService {
         try {
             this.orderClear(order_id);
 
-            const order = await this.order
-                .findOne({ _id: order_id })
-                .select(['_id', 'status'])
-                .exec();
+            const order = await this.order.findOne({ _id: order_id }).exec();
 
             const orderClothes = await this.orderClothes
                 .find({ order_id: order_id })
                 .populate({
                     path: 'clothes_id',
                     populate: { path: '_id' },
-                    select: {
-                        _id: 1,
-                        name: 1,
-                        imagesUrls: 1,
-                        price: 1,
-                        sale: 1,
-                    },
                 })
-                .select([
-                    '_id',
-                    'clothes_id',
-                    'count',
-                    'size',
-                    'color',
-                    'clothesPrice',
-                    'clothesSale',
-                ])
                 .exec();
 
             if (!order) {
@@ -341,6 +378,31 @@ class ClothesToOrderService {
                 throw new Error('Unable to find order clothes');
             }
 
+            if (orderClothes.length > 0) {
+                await Promise.all(
+                    orderClothes.map(
+                        async (item: OrderClothes, index: number) => {
+                            if (item.productModel === 'Modeling') {
+                                const modelingObj = item.clothes_id as Modeling;
+                                const modeling = await this.modeling
+                                    .findById({ _id: modelingObj._id })
+                                    .populate({
+                                        path: 'clothes_id',
+                                        populate: { path: '_id' },
+                                    });
+                                if (!modeling) {
+                                    throw new Error(
+                                        'Unable to find order clothes'
+                                    );
+                                }
+                                orderClothes[index].clothes_id = modeling;
+                                item.clothes_id = modeling;
+                            }
+                        }
+                    )
+                );
+            }
+
             const orderInfo = {} as OrderInfo;
             if (orderClothes.length === 0) {
                 return orderInfo;
@@ -349,8 +411,24 @@ class ClothesToOrderService {
 
             orderClothes.map((item) => {
                 const clothesItem = {} as ClothesItem;
-                const clothes = item.clothes_id as Clothes;
+                if (item.productModel === 'Modeling') {
+                    const modeling = item.clothes_id as Modeling;
+                    clothesItem.modeling = modeling;
+                }
+                let clothes = {} as Clothes | Modeling;
 
+                if (item.productModel === 'Clothes') {
+                    clothes = item.clothes_id as Clothes;
+                }
+                if (item.productModel === 'Modeling') {
+                    clothes = item.clothes_id as Modeling;
+                    if (clothes) {
+                        clothes = clothes.clothes_id as Clothes;
+                    }
+                }
+                clothes = clothes as Clothes;
+                clothesItem.isModeling = clothes.isModeling;
+                clothesItem.productModel = item.productModel;
                 clothesItem.clothes_id = clothes._id;
                 clothesItem.orderClothes_id = item._id;
                 if (
@@ -405,29 +483,7 @@ class ClothesToOrderService {
                 .populate({
                     path: 'user_id',
                     populate: { path: '_id' },
-                    select: {
-                        _id: 1,
-                        name: 1,
-                        surname: 1,
-                        patronymic: 1,
-                        email: 1,
-                    },
                 })
-                .select([
-                    '_id',
-                    'user_id',
-                    'status',
-                    'status_update',
-                    'invoice',
-                    'region',
-                    'city',
-                    'novaposhta',
-                    'phone',
-                    'name',
-                    'surname',
-                    'patronymic',
-                    'email',
-                ])
                 .exec();
 
             if (!orders) {
@@ -440,30 +496,38 @@ class ClothesToOrderService {
                 orders.map(async (item) => {
                     this.orderClear(item._id);
                     const orderClothesItem = (await this.orderClothes
-                        .find({ order_id: item._id })
+                        .find({ order_id: item._id})
                         .populate({
                             path: 'clothes_id',
                             populate: { path: '_id' },
-                            select: {
-                                _id: 1,
-                                name: 1,
-                                imagesUrls: 1,
-                                price: 1,
-                                sale: 1,
-                                type: 1,
-                            },
                         })
-                        .select([
-                            '_id',
-                            'clothes_id',
-                            'order_id',
-                            'count',
-                            'size',
-                            'color',
-                            'clothesPrice',
-                            'clothesSale',
-                        ])
                         .exec()) as Array<OrderClothes>;
+                    if (orderClothesItem.length > 0) {
+                        await Promise.all(
+                            orderClothesItem.map(
+                                async (item: OrderClothes, index: number) => {
+                                    if (item.productModel === 'Modeling') {
+                                        const modelingObj = item.clothes_id as Modeling;
+                                        const modeling = await this.modeling
+                                            .findById({ _id: modelingObj._id })
+                                            .populate({
+                                                path: 'clothes_id',
+                                                populate: { path: '_id' },
+                                            });
+                                        if (!modeling) {
+                                            throw new Error(
+                                                'Unable to find order clothes'
+                                            );
+                                        }
+                                        orderClothesItem[index].clothes_id =
+                                            modeling;
+                                        item.clothes_id = modeling;
+                          
+                                    }
+                                }
+                            )
+                        );
+                    }
                     orderClothes.push(orderClothesItem);
                 })
             );
@@ -488,25 +552,30 @@ class ClothesToOrderService {
                 orderItem.images = [] as Array<ClothesImage>;
                 const clothesImage = {} as ClothesImage;
                 const userInfo = {} as UserInfo;
-
+         
                 orderItem._id = orders[i]._id;
                 orderItem.invoice = orders[i].invoice;
                 orderItem.region = orders[i].region;
                 orderItem.city = orders[i].city;
                 orderItem.novaposhta = orders[i].novaposhta;
                 orderItem.phone = orders[i].phone;
-                const name = orders[i].name !== undefined ? orders[i].name : "";
-                const surname = orders[i].surname !== undefined ? orders[i].surname : "";
-                const patronymic = orders[i].patronymic !== undefined ? orders[i].patronymic : "";
-                orderItem.name = name + " " + surname + " " + patronymic;
+                const name = orders[i].name !== undefined ? orders[i].name : '';
+                const surname =
+                    orders[i].surname !== undefined ? orders[i].surname : '';
+                const patronymic =
+                    orders[i].patronymic !== undefined
+                        ? orders[i].patronymic
+                        : '';
+                orderItem.name = name + ' ' + surname + ' ' + patronymic;
                 orderItem.email = orders[i].email;
 
                 const user = orders[i].user_id as Account;
                 userInfo.user_id = user._id;
-                const name1 = user.name !== undefined ? user.name : "";
-                const surname1 = user.surname !== undefined ? user.surname : "";
-                const patronymic1 = user.patronymic !== undefined ? user.patronymic : "";
-                userInfo.name = name1 + " " + surname1 + " " + patronymic1;
+                const name1 = user.name !== undefined ? user.name : '';
+                const surname1 = user.surname !== undefined ? user.surname : '';
+                const patronymic1 =
+                    user.patronymic !== undefined ? user.patronymic : '';
+                userInfo.name = name1 + ' ' + surname1 + ' ' + patronymic1;
                 userInfo.email = user.email;
                 orderItem.user_info = userInfo;
 
@@ -514,14 +583,40 @@ class ClothesToOrderService {
                     parseInt(orders[i]._id.toString().substring(0, 8), 16) *
                         1000
                 );
-
+        
                 orderItem.order_number = date.getTime().toString();
                 orderItem.status = orders[i].status;
                 orderItem.status_update = orders[i].status_update;
 
                 for (let j = 0; j < orderClothes[i].length; j++) {
-                    const clothes = orderClothes[i][j].clothes_id as Clothes;
+                    let clothes = orderClothes[i][j].clothes_id as
+                        | Clothes
+                        | Modeling;
+
+                    if (orderClothes[i][j].productModel === 'Clothes') {
+                        clothes = orderClothes[i][j].clothes_id as Clothes;
+                    }
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        clothes = orderClothes[i][j].clothes_id as Modeling;
+                        if (clothes) {
+                            clothes = clothes.clothes_id as Clothes;
+                        }
+                    }
+                    clothes = clothes as Clothes;
+                    if (!clothes) {
+                        continue;
+                    }               
+                    clothesImage.isModeling = clothes.isModeling;
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        const modeling = orderClothes[i][j].clothes_id as Modeling;
+                        clothesImage.modeling = modeling;
+                    }
                     const clothesItem = {} as ClothesItem;
+                    clothesItem.isModeling = clothes.isModeling;
+                    if (orderClothes[i][j].productModel === 'Modeling') {
+                        const modeling = orderClothes[i][j].clothes_id as Modeling;
+                        clothesItem.modeling = modeling;
+                    }
                     clothesItem.clothes_id = clothes._id;
                     clothesItem.clothes_type = clothes.type;
                     clothesItem.clothes_name = clothes.name;
@@ -541,7 +636,7 @@ class ClothesToOrderService {
                         clothesImage.clothes_id = clothes._id;
                         clothesImage.image = clothes.imagesUrls[0];
                         orderItem.images.push(clothesImage);
-                    } 
+                    }
                     clothesItem.size = orderClothes[i][j].size;
                     if (orderItem.status === 'cart') {
                         clothesItem.price = clothes.price;
@@ -585,13 +680,29 @@ class ClothesToOrderService {
         order_id: Schema.Types.ObjectId
     ): Promise<void | Error> {
         try {
-            const clothes = (await this.OrderClothesService.search({
+            const clothes = (await this.orderClothes.find({
                 order_id: order_id,
             })) as Array<OrderClothes>;
-
             if (!clothes) {
                 throw new Error('Unable to find clothes in this order');
             }
+            await Promise.all(
+                clothes.map(async (item, index) => {
+                    if (item.productModel === 'Modeling') {
+                        const modeling = await this.modeling
+                            .findById({ _id: item.clothes_id })
+                            .populate({
+                                path: 'clothes_id',
+                                populate: { path: '_id' },
+                            });
+                        if (!modeling) {
+                            throw new Error('Unable to find order clothes');
+                        }
+                        clothes[index].clothes_id = modeling.clothes_id;
+                        item.clothes_id = modeling.clothes_id;
+                    }
+                })
+            );
 
             const clothes_id = clothes.map((item) => [
                 item.clothes_id as Schema.Types.ObjectId,

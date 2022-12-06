@@ -57,8 +57,7 @@ class ModelingController implements Controller {
             const {
                 name,
                 size,
-                color,
-                type,
+                clothes_id
             } = req.body;
 
             const account_id = req.account._id;
@@ -66,8 +65,7 @@ class ModelingController implements Controller {
             const modeling = await this.ModelingService.create(
                 name,
                 size,
-                color,
-                type,
+                clothes_id,
                 account_id
             );
 
@@ -105,8 +103,6 @@ class ModelingController implements Controller {
                 _id,
                 name,
                 size,
-                color,
-                type,
                 images,
                 texts,
                 newTexts,
@@ -116,12 +112,10 @@ class ModelingController implements Controller {
 
             const account_id = req.account._id;
 
-            const collection = await this.ModelingService.update(
+            const modeling = await this.ModelingService.update(
                 _id,
                 name,
                 size,
-                color,
-                type,
                 images,
                 texts,
                 newTexts,
@@ -130,7 +124,7 @@ class ModelingController implements Controller {
                 account_id
             );
 
-            res.status(200).json({ collection });
+            res.status(200).json({ modeling });
         } catch (error: any) {
             next(new HttpException(400, error.message));
         }

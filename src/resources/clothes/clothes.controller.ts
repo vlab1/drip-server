@@ -90,6 +90,7 @@ class ClothesController implements Controller {
                 clothesCount,
                 sex,
                 collection_id,
+                isModeling
             } = req.body;
 
             const clothes = await this.ClothesService.create(
@@ -104,7 +105,8 @@ class ClothesController implements Controller {
                 care,
                 clothesCount,
                 sex,
-                collection_id
+                collection_id,
+                isModeling
             );
 
             res.status(201).json({ clothes });

@@ -51,14 +51,15 @@ class OrderClothesController implements Controller {
         next: NextFunction
     ): Promise<Response | void> => {
         try {
-            const { clothes_id, order_id, count, size, color } = req.body;
+            const { clothes_id, order_id, count, size, color, productModel } = req.body;
 
             const orderClothes = await this.OrderClothesService.create(
                 clothes_id,
                 order_id,
                 count,
                 size,
-                color
+                color,
+                productModel
             );
 
             res.status(201).json({ orderClothes });

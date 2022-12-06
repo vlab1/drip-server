@@ -3,16 +3,13 @@ import Joi from 'joi';
 const create = Joi.object({
     name: Joi.string(),
     size: Joi.string(),
-    color: Joi.string(),
-    type: Joi.string(),
+    clothes_id: Joi.string().hex().length(24).required(),
 });
 
 const update = Joi.object({
     _id: Joi.string().hex().length(24).required(),
     name: Joi.string(),
     size: Joi.string(),
-    color: Joi.string(),
-    type: Joi.string(),
     images: Joi.array().items(Joi.object({
         imageUrl: Joi.string(),
         image_height: Joi.number(),
