@@ -84,8 +84,6 @@ const find = Joi.object({
     _id: Joi.string().hex().length(24),
     name: Joi.string(),
     size: Joi.string(),
-    color: Joi.string(),
-    type: Joi.string(),
     user_id: Joi.string().hex().length(24),
 });
 

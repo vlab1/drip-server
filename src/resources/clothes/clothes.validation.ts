@@ -68,6 +68,7 @@ const find = Joi.object({
     collection_id: Joi.string().hex().length(24),
     limit: Joi.number().default(0),
     fullTextSearch: Joi.boolean().default(false),
+    isModeling: Joi.boolean(),
 });
 
 const filter = Joi.object({
