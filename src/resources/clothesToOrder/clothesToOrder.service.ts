@@ -34,10 +34,10 @@ class ClothesToOrderService {
         }
     }
     private ordersSortFunction(a: any, b: any) {
-        if (a._id < b._id) {
+        if (a._id > b._id) {
             return -1;
         }
-        if (a._id > b._id) {
+        if (a._id < b._id) {
             return 1;
         }
         return 0;
