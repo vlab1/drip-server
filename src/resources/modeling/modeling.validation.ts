@@ -22,7 +22,7 @@ const update = Joi.object({
         z_coordinate: Joi.number(),
     })),
     texts: Joi.array().items(Joi.object({
-        text_id: Joi.string(),
+        _id: Joi.string(),
         text_size: Joi.number(),
         alignment: Joi.string(),
         text_color: Joi.string(),
