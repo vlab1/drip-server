@@ -45,7 +45,6 @@ class CollectionService {
         try {
             const imagesUrls: Array<string> = [];
             const gifUrls: Array<string> = [];
-            console.log(images);
             await Promise.all(
                 images.map(async (file: Express.Multer.File) => {
                     const randomName: string = '☂' + this.randGen() + '☁';
