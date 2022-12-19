@@ -55,8 +55,8 @@ class ClothesService {
         isModeling: boolean
     ): Promise<Clothes | Error> {
         try {
-            if (isModeling && images && images.length > 1) {
-                throw new Error('Clothing layout can only contain one image');
+            if (isModeling && images && images.length > 2) {
+                throw new Error('Clothing layout can only contain two image');
             }
 
             if (isModeling && color && color.length > 1) {
