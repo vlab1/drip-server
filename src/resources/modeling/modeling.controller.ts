@@ -5,6 +5,7 @@ import validationMiddleware from '@/middleware/validation.middleware';
 import validate from '@/resources/modeling/modeling.validation';
 import ModelingService from '@/resources/modeling/modeling.service';
 import authenticated from '@/middleware/authenticated.middleware';
+import adminPermissionMiddleware from '@/middleware/admin.permission.middleware';
 const multer = require('multer');
 const memoStorage = multer.memoryStorage();
 const upload = multer({ memoStorage });
@@ -45,6 +46,13 @@ class ModelingController implements Controller {
             authenticated,
             validationMiddleware(validate.find),
             this.find
+        );
+        this.router.get(
+            `${this.path}/admin/find`,
+            authenticated,
+            adminPermissionMiddleware,
+            validationMiddleware(validate.find),
+            this.adminFind
         );
     }
 
@@ -147,6 +155,24 @@ class ModelingController implements Controller {
     };
 
     private find = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<Response | void> => {
+        try {
+            const props = req.body;
+
+            const account_id = req.account._id;
+
+            const modeling = await this.ModelingService.find(props, account_id);
+
+            res.status(200).json({ modeling });
+        } catch (error: any) {
+            next(new HttpException(400, error.message));
+        }
+    };
+
+    private adminFind = async (
         req: Request,
         res: Response,
         next: NextFunction

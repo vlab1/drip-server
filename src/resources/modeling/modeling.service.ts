@@ -335,6 +335,29 @@ class ModelingService {
             throw new Error(error.message);
         }
     }
+
+        /**
+     * Attempt to admin find modeling by id
+     */
+        public async adminFind(
+            props: Props,
+            account_id: Schema.Types.ObjectId
+        ): Promise<Modeling | Array<Modeling> | Modeling> {
+            try {
+                const modeling = await this.modeling.find(props).populate({
+                    path: 'user_id',
+                    populate: { path: '_id' },
+                });
+    
+                if (!modeling) {
+                    throw new Error('Unable to find modeling');
+                }
+    
+                return modeling;
+            } catch (error: any) {
+                throw new Error(error.message);
+            }
+        }
 }
 
 export default ModelingService;
